@@ -1,54 +1,71 @@
-const canvas = document.getElementById('game-canvas');
-const ctx = canvas.getContext('2d');
+const canvas = document.getElementById("game-canvas");
+const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 const character = {
   x: 500,
-  y: canvas.height / 2,
+  y: canvas.height /2.5,
   width: 200,
   height: 200,
-  isJumping: false,
   isCrouching: false,
   isAttacking: false,
-  attackType: 'sword',
+  attackType: "sword",
   ultimateReady: false,
   ultimateChargeTime: 15000,
   health: 10,
   idleSprites: [
-    'adventurer-idle-2-00.png',
-    'adventurer-idle-2-01.png',
-    'adventurer-idle-2-02.png',
-    'adventurer-idle-2-03.png',
+    "adventurer-idle-2-00.png",
+    "adventurer-idle-2-01.png",
+    "adventurer-idle-2-02.png",
+    "adventurer-idle-2-03.png",
   ],
-  runningSprites:[  
-  'adventurer-run-00.png',
-  'adventurer-run-01.png',
-  'adventurer-run-02.png',
-  'adventurer-run-03.png',
-  'adventurer-run-04.png',
-  'adventurer-run-05.png',],
+  jumpingSprites: [
+    "adventurer-jump-00.png",
+    "adventurer-jump-01.png",
+    "adventurer-jump-02.png",
+    "adventurer-jump-03.png",
+  ],
+  runningSprites: [
+    "adventurer-run-00.png",
+    "adventurer-run-01.png",
+    "adventurer-run-02.png",
+    "adventurer-run-03.png",
+    "adventurer-run-04.png",
+    "adventurer-run-05.png",
+  ],
   currentSpriteIndex: 0,
+  currentJumpingSpriteIndex: 0,
   currentRunningSpriteIndex: 0,
   spriteInterval: null,
+  jumpStartTime: 0,
+  canJump: true,
 };
 
 const characterSprites = [];
 character.idleSprites.forEach((spriteName) => {
   const sprite = new Image();
-  sprite.src = `images/${spriteName}`;
+  sprite.src = "images/" + spriteName;
   characterSprites.push(sprite);
 });
 const runningCharacterSprites = [];
 character.runningSprites.forEach((spriteName) => {
   const sprite = new Image();
-  sprite.src = `images/${spriteName}`;
+  sprite.src = "images/" + spriteName;
   runningCharacterSprites.push(sprite);
 });
 
+const jumpingCharacterSprites = [];
+character.jumpingSprites.forEach((spriteName) => {
+  const sprite = new Image();
+  sprite.src = "images/" + spriteName;
+  jumpingCharacterSprites.push(sprite);
+});
+
 let isRunning = false;
+let isJumping = false
 const backgroundImage = new Image();
-backgroundImage.src = 'images/Dryland.png';
+backgroundImage.src = "images/Dryland.png";
 backgroundImage.onload = () => {
   gameLoop();
 };
@@ -58,20 +75,23 @@ let isLeftKeyPressed = false;
 let isUpKeyPressed = false;
 let isDownKeyPressed = false;
 
-document.addEventListener('keydown', (event) => {
+document.addEventListener("keydown", (event) => {
   switch (event.key) {
-    case 'ArrowRight':
+    case "ArrowRight":
       isRightKeyPressed = true;
       isRunning = true;
       break;
-    case 'ArrowLeft':
+    case "ArrowLeft":
       isLeftKeyPressed = true;
       isRunning = true;
       break;
-    case 'ArrowUp':
-      isUpKeyPressed = true;
-      break;
-    case 'ArrowDown':
+    case "ArrowUp":
+      if (character.canJump) {
+        isUpKeyPressed = true;
+        isJumping = true;
+      }
+        break;
+    case "ArrowDown":
       isDownKeyPressed = true;
       break;
     default:
@@ -79,20 +99,20 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
-document.addEventListener('keyup', (event) => {
+document.addEventListener("keyup", (event) => {
   switch (event.key) {
-    case 'ArrowRight':
+    case "ArrowRight":
       isRightKeyPressed = false;
       isRunning = false;
       break;
-    case 'ArrowLeft':
+    case "ArrowLeft":
       isLeftKeyPressed = false;
       isRunning = false;
       break;
-    case 'ArrowUp':
+    case "ArrowUp":
       isUpKeyPressed = false;
       break;
-    case 'ArrowDown':
+    case "ArrowDown":
       isDownKeyPressed = false;
       break;
     default:
@@ -102,10 +122,16 @@ document.addEventListener('keyup', (event) => {
 function drawCharacter() {
   let spritesArray = characterSprites;
   let currentIndex = character.currentSpriteIndex;
-  if (isRunning) {
+  if (isJumping) {
+  spritesArray = jumpingCharacterSprites;
+  currentIndex = character.currentJumpingSpriteIndex;
+}
+  else if (isRunning) {
     spritesArray = runningCharacterSprites;
     currentIndex = character.currentRunningSpriteIndex;
   }
+
+
   ctx.save();
   if (isLeftKeyPressed) {
     ctx.scale(-1, 1);
@@ -116,7 +142,7 @@ function drawCharacter() {
       character.width,
       character.height
     );
-  } else {
+  } else{
     ctx.drawImage(
       spritesArray[currentIndex],
       character.x,
@@ -135,8 +161,23 @@ function updateCharacterPosition() {
   if (isLeftKeyPressed) {
     character.x -= 5;
   }
-  if (isUpKeyPressed) {
-    character.y -= 10;
+  
+  if (isUpKeyPressed && character.canJump) {
+    character.canJump = false;
+    const jumpInterval = setInterval(() => {
+      character.y -= 10;
+    }, 50);
+    setTimeout(() => {
+      clearInterval(jumpInterval);
+      const downJumpInterval = setInterval(() => {
+        character.y += 10;
+      }, 50);
+      setTimeout(() => {
+        clearInterval(downJumpInterval);
+        character.canJump = true;
+        isJumping = false;
+      }, 400);
+    }, 400);
   }
   if (isDownKeyPressed) {
     character.y += 10;
@@ -150,11 +191,11 @@ function gameLoop() {
 
   drawCharacter()
 
-  ctx.fillStyle = 'black';
-  ctx.font = '24px Arial';
+  ctx.fillStyle = "black";
+  ctx.font = "24px Arial";
   ctx.fillText(`Health: ${character.health}`, 10, 30);
 
-  ctx.fillText(`Ultimate: ${character.ultimateReady ? 'Ready' : 'Charging'}`, 10, 60);
+  ctx.fillText(`Ultimate: ${character.ultimateReady ? "Ready" : "Charging"}`, 10, 60);
 
   updateCharacterPosition();
 
@@ -168,13 +209,21 @@ character.spriteInterval = setInterval(() => {
       character.currentRunningSpriteIndex = 0;
     }
   }
+
   else {
   character.currentSpriteIndex++;
   if (character.currentSpriteIndex >= character.idleSprites.length) {
     character.currentSpriteIndex = 0;
   }}
-}, 250);
-
+}, 150);
+character.spriteInterval = setInterval(() => {
+  if (isJumping) {
+    character.currentJumpingSpriteIndex++;
+    if (character.currentJumpingSpriteIndex >= character.jumpingSprites.length) {
+      character.currentJumpingSpriteIndex = 0;
+    }
+  }
+  }, 200)
 window.addEventListener("resize", () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
