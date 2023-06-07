@@ -101,6 +101,7 @@ class Boss {
     this.currentMeleeSpriteIndex = 0;
     this.currentUltimateSpriteIndex = 0;
     this.currentRangeSpriteIndex = 0;
+    this.currentIdleSpriteIndex = 0;
     this.spriteInterval = null;
     this.canAttack = true;
     this.ultimateReady = false;
@@ -126,13 +127,20 @@ class Boss {
       return sprite;
     });
   }
-
+  idleBoss(){
+    this.spriteInterval = setInterval(() => {
+      this.currentIdleSpriteIndex++
+      if (this.currentIdleSpriteIndex >= this.idleSpriteArray.length) {
+        this.currentIdleSpriteIndex = 0;
+      }
+    }, 200);
+  }
   drawBoss(ctx) {
-    if (!this.status){
-      return
+    if (!this.status) {
+      return;
     }
     let spritesArray = this.idleSpriteArray;
-    let currentIndex = this.currentSpriteIndex;
+    let currentIndex = this.currentIdleSpriteIndex;
     let flipSprite = false;
   
     if (this.isUlting) {
@@ -144,6 +152,9 @@ class Boss {
     } else if (this.isAttacking) {
       spritesArray = this.meleeSpriteArray;
       currentIndex = this.currentMeleeSpriteIndex;
+    } else if (this.currentIdleSpriteIndex !== this.currentSpriteIndex) {
+      spritesArray = this.idleSpriteArray;
+      currentIndex = this.currentIdleSpriteIndex;
     }
   
     if (this.x < character.x) {
@@ -169,24 +180,20 @@ class Boss {
         this.width,
         this.height
       );
-    }}
-    updateBoss() {
-      if (this.isAttacking) {
-        this.currentSpriteIndex = this.currentMeleeSpriteIndex;
-      } else if (this.isUlting) {
-        this.currentSpriteIndex = this.currentUltimateSpriteIndex;
-      } else if (this.isRangeAttacking) {
-        this.currentSpriteIndex = this.currentRangeSpriteIndex;
-      } else {
-        const numSprites = this.idleSpriteArray.length;
-        const numFrames = Math.floor(1000 / this.animationInterval);
-        this.currentSpriteIndex = Math.floor(this.currentSpriteIndex / numFrames) % numSprites;
-        this.currentSpriteIndex++;
-        if (this.currentSpriteIndex >= numSprites * numFrames) {
-          this.currentSpriteIndex = 0;
-        }
-      }
     }
+  }
+  
+  updateBoss() {
+    if (this.isAttacking) {
+      this.currentSpriteIndex = this.currentMeleeSpriteIndex;
+    } else if (this.isUlting) {
+      this.currentSpriteIndex = this.currentUltimateSpriteIndex;
+    } else if (this.isRangeAttacking) {
+      this.currentSpriteIndex = this.currentRangeSpriteIndex;
+    } else {
+      this.currentSpriteIndex = this.currentIdleSpriteIndex;
+    }
+  }
     
   initializeUltimateTimeout() {
     setTimeout(() => {
@@ -277,12 +284,13 @@ class Boss {
     }
   }
   startBossAttacks() {
-    const attackInterval = (Math.random() * 1000) + 1500;
     const performAttack = () => {
       this.bossAttack();
+      const attackInterval = Math.random() * 3500; 
       setTimeout(performAttack, attackInterval);
     };
-    setTimeout(performAttack, attackInterval);
+    const initialAttackInterval = Math.random() * 3500; 
+    setTimeout(performAttack, initialAttackInterval);
   }
 }
 
@@ -291,6 +299,7 @@ function update() {
   mageBoss.drawBoss(ctx);
   requestAnimationFrame(update);
 }
+let bossArray = []
 const mageBoss = new Boss(
   80,
   150,
@@ -343,7 +352,7 @@ const mageBoss = new Boss(
     "mage-range07.png",
   ]
 );
-
+bossArray.push(mageBoss)
 const createSpriteArray = (spriteNames) =>
   spriteNames.map((spriteName) => {
     const sprite = new Image();
@@ -358,8 +367,10 @@ const crouchingCharacterSprites = createSpriteArray(character.crouchSprites);
 const swordCharacterSprites = createSpriteArray(character.swordSprites);
 const ultimateCharacterSprites = createSpriteArray(character.ultimateSprites);
 const bowCharacterSprites = createSpriteArray(character.bowSprites);
-const arrow = new Image()
-arrow.src = "images/item_8.png"
+const arrowImage = new Image()
+arrowImage.src = "images/item_8.png"
+arrowImage.width = 60;
+arrowImage.height = 50;
 
 let isRunning = false;
 let isJumping = false;
@@ -380,8 +391,10 @@ let isRightKeyPressed = false;
 let isLeftKeyPressed = false;
 let isSpaceBarPressed = false;
 let isDownKeyPressed = false;
-
+let arrow = null;
+let isArrowActive = false;
 document.addEventListener("keydown", (event) => {
+  for (let boss of bossArray){
     if (isUsingUltimate) {
     return; 
   }
@@ -398,6 +411,7 @@ document.addEventListener("keydown", (event) => {
       if (character.canJump && character.canAttack) {
         isSpaceBarPressed = true;
         isJumping = true;
+        character.currentJumpingSpriteIndex = 0;
       }
         break;
     case "ArrowDown":
@@ -412,39 +426,59 @@ document.addEventListener("keydown", (event) => {
       case "Q":
         if (character.canAttack){
           isAttacking = true;
+          character.currentSwordSpriteIndex = 0;
           character.canAttack = false
           setTimeout(() => {
             isAttacking = false;
             character.canAttack= true
+            if ((isLeftKeyPressed && boss.x - character.x <= 0 && boss.x - character.x >= -150)|| (boss.x - character.x >= 0 && boss.x - character.x <= 150)){
+              boss.health -=2
+            }
           }, 750);}
           break;
       case "E":
       case "e":
         if (character.ultimateReady){
           isUsingUltimate = true;
+          character.currentUltimateSpriteIndex = 0;
           character.ultimateReady = false
           setTimeout(() => {
             isUsingUltimate = false;
+            if (Math.abs(boss.x - character.x) < 150){
+              boss.health -=4
+            }
           }, 1800);
           setTimeout(() => {
             character.ultimateReady= true
           }, 15000);}
       break;
       case "W":
-      case "w":
-      case "z":
-      case "Z":
-        if (character.canAttack){
-          isUsingBow = true;
-          character.canAttack = false
-          setTimeout(() => {
-            isUsingBow = false;
-            character.canAttack= true
-          }, 1200);}
-        break;
-    default:
-      break;
-  }
+        case "w":
+        case "z":
+        case "Z":
+          if (character.canAttack && !isArrowActive) {
+            isUsingBow = true;
+            character.currentbowSpriteIndex = 0;
+            character.canAttack = false;
+            setTimeout(() => {
+                   arrow = {
+                    x: character.x + character.width-25, 
+                    y: character.y + character.height/1.5-10, 
+                    velocity: 10, 
+                    active: true 
+                  };
+                  isArrowActive = true;
+            }, 950);
+            setTimeout(() => {
+              isUsingBow = false;
+              character.canAttack = true;
+            }, 1200);
+          }
+          break;
+    
+        default:
+          break;
+      }}
 });
 
 document.addEventListener("keyup", (event) => {
@@ -509,6 +543,13 @@ function drawCharacter() {
       character.height
     );
   }
+  if (isArrowActive) {
+    ctx.save();
+    ctx.translate(arrow.x, arrow.y);
+    ctx.rotate(0.68); // Adjust the rotation angle as per your needs
+    ctx.drawImage(arrowImage, -arrowImage.width / 2, -arrowImage.height / 2, arrowImage.width, arrowImage.height);
+    ctx.restore();
+  }
   ctx.restore();
 }    
 let shouldStopUltimate = false;
@@ -568,25 +609,38 @@ function updateCharacterPosition() {
       character.height = 110;
       character.y = canvas.height /2.3 +38
   }
-}
 
+
+}
+function updateArrowPosition() {
+  if (isArrowActive) {
+    arrow.x += arrow.velocity;
+  
+    if (arrow.x >= bossArray[0].x) {
+      isArrowActive = false;
+      bossArray[0].health -= 1;
+    }
+  }
+}
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 
   update();
-  drawCharacter()
+  drawCharacter();
+  updateArrowPosition();
   ctx.fillStyle = "black";
   ctx.font = "24px Arial";
   ctx.fillText(`Health: ${character.health}`, 10, 30);
-
   ctx.fillText(`Ultimate: ${character.ultimateReady ? "Ready" : "Charging"}`, 10, 60);
+  ctx.fillText(`Boss Health: ${mageBoss.health}`, canvas.width - 200, 30); // Display boss health on the top right
 
   updateCharacterPosition();
 
   requestAnimationFrame(gameLoop);
 }
+mageBoss.idleBoss();
 mageBoss.startBossAttacks();
 character.spriteInterval = setInterval(() => {
   if (isUsingUltimate) {
