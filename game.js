@@ -2,6 +2,7 @@ const canvas = document.getElementById("game-canvas");
 const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
+let level = 1
 let fireBalls = [];
 const character = {
   x: 100,
@@ -317,35 +318,44 @@ class Boss {
   }
   
   bossAttack() {
+    if (this.status){
     if (this.ultimateReady === true) {
       this.bossUltimateAttack();
     } else if (Math.abs(this.x - character.x) < 300) {
       this.bossMeleeAttack();
     } else {
       this.bossRangeAttack();
-    }
+    }}
   }
   startBossAttacks() {
+    if (this.status){
     const performAttack = () => {
       this.bossAttack();
       const attackInterval = Math.random() * 3500; 
       setTimeout(performAttack, attackInterval);
     };
     const initialAttackInterval = Math.random() * 3500; 
-    setTimeout(performAttack, initialAttackInterval);
+    setTimeout(performAttack, initialAttackInterval);}
+  }
+  makeBossDie(){
+    if (this.health<=0){
+      this.status = false;
+      level+=0.5
+    }
   }
 }
 
 function update() {
+  if (mageBoss.status){
   mageBoss.updateBoss();
-  mageBoss.drawBoss(ctx);
+  mageBoss.drawBoss(ctx);}
   requestAnimationFrame(update);
 }
 let bossArray = []
 const mageBoss = new Boss(
   80,
   150,
-  20,
+  2,
   1,
   900,
   2,
@@ -414,7 +424,6 @@ function updateFireBallPosition() {
   for (let i = 0; i < fireBalls.length; i++) {
     let fireBall = fireBalls[i];
     fireBall.x -= fireBall.velocity;
-
     if (fireBall.x < 0) {
       fireBalls.splice(i, 1);
       i--;
@@ -475,8 +484,12 @@ let wasArrowAimingLeft = false;
 setTimeout(() => {
   character.ultimateReady= true
 }, 15000);
-const backgroundImage = new Image();
+let backgroundImage = new Image();
 backgroundImage.src = "images/Dryland.png";
+let currentBoss = mageBoss;
+
+
+
 backgroundImage.onload = () => {
   gameLoop();
 };
@@ -651,24 +664,32 @@ function drawCharacter() {
 let shouldStopUltimate = false;
 let yIncrement = 0;
 let yDecrement = 0;
-
+let characterSpeed = 5;
+let characterCrouchingSpeed = 1.5;
 function updateCharacterPosition() {
   if (!isCrouching && character.canJump) {
     character.height = 148;
     character.y = canvas.height /2.3
   }
-  //here you need to check every boss status, if the boss is dead you can go to the next room
-  if (isRightKeyPressed && isCrouching && character.x < canvas.width - character.width) {
-    character.x += 1.5;
+ 
+  if (!Number.isInteger(level) && isRightKeyPressed && isCrouching){
+    character.x += characterCrouchingSpeed;
+  }
+  else if (!Number.isInteger(level) && isRightKeyPressed){
+    character.x += characterSpeed;
+  }
+  else if (isRightKeyPressed && isCrouching && character.x < canvas.width - character.width) {
+    character.x += characterCrouchingSpeed;
   }
   else if (isRightKeyPressed && character.x < canvas.width - character.width){
-    character.x += 5;
+    character.x += characterSpeed;
   }
+
   if (isLeftKeyPressed && isCrouching && character.x > 0) {
-    character.x -= 1.5;
+    character.x -= characterCrouchingSpeed;
   }
   else if (isLeftKeyPressed && character.x > 0){
-    character.x -= 5;
+    character.x -= characterSpeed;
   }
   else if (isUsingUltimate){
     if (!shouldStopUltimate){
@@ -680,7 +701,7 @@ function updateCharacterPosition() {
         yIncrement -=3
       }, 1000);
       if (character.x < canvas.width - character.width){
-      character.x += 1.5;}
+      character.x += characterCrouchingSpeed;}
     }
   
   if (isSpaceBarPressed && character.canJump) {
@@ -756,18 +777,26 @@ function gameLoop() {
   update();
   drawCharacter();
   updateArrowPosition();
-  updateFireBallPosition();
+
   ctx.fillStyle = "black";
   ctx.font = "24px Arial";
   ctx.fillText(`Health: ${character.health}`, 10, 30);
   ctx.fillText(`Ultimate: ${character.ultimateReady ? "Ready" : "Charging"}`, 10, 60);
   ctx.fillText(`Boss Health: ${mageBoss.health}`, canvas.width - 200, 30); 
   updateCharacterPosition();
-
+if (mageBoss.status){
+  updateFireBallPosition();
   mageBoss.mageBossUltimate();
-
+  mageBoss.makeBossDie();
+}
+if (character.x>=canvas.width){
+  backgroundImage.src ="images/castleland.png"
+  character.x = 100
+  level+=0.5
+}
   requestAnimationFrame(gameLoop);
 }
+
 mageBoss.idleBoss();
 mageBoss.startBossAttacks();
 character.spriteInterval = setInterval(() => {
