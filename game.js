@@ -2,7 +2,7 @@ const canvas = document.getElementById("game-canvas");
 const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-
+let fireBalls = [];
 const character = {
   x: 100,
   y: canvas.height/2.3,
@@ -82,13 +82,16 @@ const character = {
 };
 
 class Boss {
-  constructor(width, height, health, meleeDamages, meleeAttackTime, rangeDamages, rangeAttackTime, ultimateDamages, ultimateAttackTime, idleSprites, meleeSprites, ultimateSprites, rangeSprites) {
+  constructor(width, height, health, meleeDamages, meleeAttackTime, rangeDamages, rangeAttackTime, ultimateDamages, ultimateAttackTime, idleSprites, meleeSprites, ultimateSprites, rangeSprites, ultimateSpellSprites) {
     this.x = 1500;
     this.basex = this.x
     this.y = character.y + (character.height - height);
+    this.basey = this.y
+    this.currentCharacterX = 0
     this.baseWidth = width
     this.width = width;
     this.height = height;
+    this.baseHeight = height;
     this.health = health;
     this.meleeDamages = meleeDamages;
     this.rangeDamages = rangeDamages;
@@ -97,17 +100,20 @@ class Boss {
     this.meleeSprites = meleeSprites;
     this.ultimateSprites = ultimateSprites;
     this.rangeSprites = rangeSprites;
+    this.ultimateSpellSprites = ultimateSpellSprites
     this.currentSpriteIndex = 0;
     this.currentMeleeSpriteIndex = 0;
     this.currentUltimateSpriteIndex = 0;
     this.currentRangeSpriteIndex = 0;
     this.currentIdleSpriteIndex = 0;
+    this.currentUltimateSpellSpriteIndex = 0;
     this.spriteInterval = null;
     this.canAttack = true;
     this.ultimateReady = false;
     this.status = true;
     this.isAttacking = false;
     this.isUlting = false;
+    this.isUltingPart2 = false;
     this.isRangeAttacking = false;
     this.meleeAttackTime = meleeAttackTime;
     this.rangeAttackTime = rangeAttackTime;
@@ -116,6 +122,7 @@ class Boss {
     this.idleSpriteArray = this.createBossSpriteArray(idleSprites);
     this.meleeSpriteArray = this.createBossSpriteArray(meleeSprites);
     this.ultimateSpriteArray = this.createBossSpriteArray(ultimateSprites);
+    this.ultimateSpellSpriteArray = this.createBossSpriteArray(ultimateSpellSprites);
     this.rangeSpriteArray = this.createBossSpriteArray(rangeSprites);
     this.initializeUltimateTimeout()
   }
@@ -181,8 +188,14 @@ class Boss {
         this.height
       );
     }
+
   }
-  
+  mageBossUltimate() {
+    if (this.isUltingPart2) {
+      const ultimateSpellSprite = this.ultimateSpellSpriteArray[this.currentUltimateSpellSpriteIndex];
+      ctx.drawImage(ultimateSpellSprite, this.currentCharacterX-20, canvas.height/2.45 );
+    }
+  }
   updateBoss() {
     if (this.isAttacking) {
       this.currentSpriteIndex = this.currentMeleeSpriteIndex;
@@ -214,8 +227,11 @@ class Boss {
         this.width = this.baseWidth
         this.x = this.basex
         this.currentMeleeSpriteIndex = 0;
+        if (Math.abs(this.x - character.x) < 200){
+          character.health-= this.meleeDamages
+        }
         clearInterval(this.spriteInterval); 
-      }, this.meleeAttackTime);
+      }, this.meleeAttackTime/0.75);
       this.spriteInterval = setInterval(() => {
         this.currentMeleeSpriteIndex++;
         if (this.currentMeleeSpriteIndex >= this.meleeSpriteArray.length) {
@@ -229,19 +245,35 @@ class Boss {
     if (this.canAttack) {
       this.isUlting = true;
       this.canAttack = false;
-      this.width *= 2.5;
+      this.currentCharacterX = character.x
+      this.width *= 2.8;
+      this.height *=1.2
+      const heighDiff = this.height -this.baseHeight;
       const widthDiff = this.width - this.baseWidth;
       this.x -= widthDiff;
+      this.y-= heighDiff
       this.ultimateReady = false;
       this.initializeUltimateTimeout();
       setTimeout(() => {
         this.isUlting = false;
         this.canAttack = true;
-        this.width = this.baseWidth
+        this.width = this.baseWidth;
+        this.height = this.baseHeight
         this.x = this.basex
-        this.currentUltimateSpriteIndex = 0;
+        this.y = this.basey
+        this.currentUltimateSpellSpriteIndex = 0;
+        if (Math.abs(this.x - character.x) < 260){
+          character.health-= this.ultimateDamages
+        }
+        this.isUltingPart2= true;
         clearInterval(this.spriteInterval); 
-      }, this.ultimateAttackTime);
+      }, this.ultimateSpellSpriteArray.length*150);
+      setTimeout(() => {
+        this.isUltingPart2 = false;
+        if (Math.abs(this.currentCharacterX - character.x) < 130){
+          character.health-= this.ultimateDamages
+        }
+      }, this.ultimateAttackTime*2);
       this.spriteInterval = setInterval(() => {
         this.currentUltimateSpriteIndex++;
         if (this.currentUltimateSpriteIndex >= this.ultimateSpriteArray.length) {
@@ -250,21 +282,30 @@ class Boss {
       }, this.ultimateAttackTime / this.ultimateSpriteArray.length);
     }
   }
-  
+
   bossRangeAttack() {
     if (this.canAttack) {
       this.isRangeAttacking = true;
       this.canAttack = false;
-      this.width *= 1.55
+      this.width *= 1.55;
       const widthDiff = this.width - this.baseWidth;
       this.x -= widthDiff;
       setTimeout(() => {
+        const fireBall = {
+          x: this.x + this.width - 25,
+          y: this.y + this.height / 1.5 - 10,
+          velocity: Math.random() * 11 + 5,
+          active: true,
+        };
+        fireBalls.push(fireBall);
+      }, 1400);
+      setTimeout(() => {
         this.isRangeAttacking = false;
         this.canAttack = true;
-        this.width = this.baseWidth
-        this.x = this.basex
+        this.width = this.baseWidth;
+        this.x = this.basex;
         this.currentRangeSpriteIndex = 0;
-        clearInterval(this.spriteInterval); 
+        clearInterval(this.spriteInterval);
       }, this.rangeAttackTime);
       this.spriteInterval = setInterval(() => {
         this.currentRangeSpriteIndex++;
@@ -274,6 +315,7 @@ class Boss {
       }, this.rangeAttackTime / this.rangeSpriteArray.length);
     }
   }
+  
   bossAttack() {
     if (this.ultimateReady === true) {
       this.bossUltimateAttack();
@@ -307,7 +349,7 @@ const mageBoss = new Boss(
   1,
   900,
   2,
-  2100,
+  1800,
   4,
   1200,
   [
@@ -326,8 +368,6 @@ const mageBoss = new Boss(
     "mage-melee03.png",
   ],
   [
-    "mage-ultimate00.png",
-    "mage-ultimate01.png",
     "mage-ultimate02.png",
     "mage-ultimate03.png",
     "mage-ultimate04.png",
@@ -350,9 +390,60 @@ const mageBoss = new Boss(
     "mage-range05.png",
     "mage-range06.png",
     "mage-range07.png",
-  ]
+  ],
+  [
+    "Nuclear_explosion1.png",
+    "Nuclear_explosion2.png",
+    "Nuclear_explosion3.png",
+    "Nuclear_explosion4.png",
+    "Nuclear_explosion5.png",
+    "Nuclear_explosion6.png",
+    "Nuclear_explosion7.png",
+    "Nuclear_explosion8.png",
+    "Nuclear_explosion9.png",
+    "Nuclear_explosion10.png",
+  ],
 );
+const fireBallImage = new Image();
+fireBallImage.src = "images/MageBoss/fireball03.png";
+fireBallImage.width = 40;
+fireBallImage.height = 40;
+let wasFireBallAimingLeft = false;
+let fireBall = null;
+function updateFireBallPosition() {
+  for (let i = 0; i < fireBalls.length; i++) {
+    let fireBall = fireBalls[i];
+    fireBall.x -= fireBall.velocity;
+
+    if (fireBall.x < 0) {
+      fireBalls.splice(i, 1);
+      i--;
+    } else if (
+      Math.abs(character.x + 150 - fireBall.x) <= 10 &&
+      Math.abs(character.y - fireBall.y + 100) <= 20
+    ) {
+      fireBalls.splice(i, 1);
+      i--;
+      character.health -= 2;
+    } else {
+      ctx.save();
+      ctx.translate(fireBall.x, fireBall.y);
+      ctx.scale(-1, 1);
+      ctx.drawImage(
+        fireBallImage,
+        -fireBallImage.width / 2 + 50,
+        -fireBallImage.height / 2 - 40,
+        fireBallImage.width,
+        fireBallImage.height
+      );
+      ctx.restore();
+    }
+  }
+}
 bossArray.push(mageBoss)
+
+
+
 const createSpriteArray = (spriteNames) =>
   spriteNames.map((spriteName) => {
     const sprite = new Image();
@@ -367,6 +458,7 @@ const crouchingCharacterSprites = createSpriteArray(character.crouchSprites);
 const swordCharacterSprites = createSpriteArray(character.swordSprites);
 const ultimateCharacterSprites = createSpriteArray(character.ultimateSprites);
 const bowCharacterSprites = createSpriteArray(character.bowSprites);
+
 const arrowImage = new Image()
 arrowImage.src = "images/item_8.png"
 arrowImage.width = 60;
@@ -378,6 +470,8 @@ let isCrouching = false;
 let isAttacking = false
 let isUsingBow = false;
 let isUsingUltimate = false;
+let wasArrowAimingLeft = false;
+
 setTimeout(() => {
   character.ultimateReady= true
 }, 15000);
@@ -418,6 +512,7 @@ document.addEventListener("keydown", (event) => {
       if (character.canJump && character.canAttack) {
         isDownKeyPressed = true;
         isCrouching = true
+        character.canAttack = false;
       }
       break;
       case "A":
@@ -429,11 +524,14 @@ document.addEventListener("keydown", (event) => {
           character.currentSwordSpriteIndex = 0;
           character.canAttack = false
           setTimeout(() => {
-            isAttacking = false;
-            character.canAttack= true
             if ((isLeftKeyPressed && boss.x - character.x <= 0 && boss.x - character.x >= -150)|| (boss.x - character.x >= 0 && boss.x - character.x <= 150)){
               boss.health -=2
             }
+          }, 600);
+          setTimeout(() => {
+            isAttacking = false;
+            character.canAttack= true
+          
           }, 750);}
           break;
       case "E":
@@ -467,6 +565,9 @@ document.addEventListener("keydown", (event) => {
                     velocity: 10, 
                     active: true 
                   };
+                  if (isLeftKeyPressed){
+                    wasArrowAimingLeft = true
+                  }
                   isArrowActive = true;
             }, 950);
             setTimeout(() => {
@@ -497,6 +598,7 @@ document.addEventListener("keyup", (event) => {
     case "ArrowDown":
       isDownKeyPressed = false;
       isCrouching = false;
+      character.canAttack = true;
       break;
     default:
       break;
@@ -543,13 +645,7 @@ function drawCharacter() {
       character.height
     );
   }
-  if (isArrowActive) {
-    ctx.save();
-    ctx.translate(arrow.x, arrow.y);
-    ctx.rotate(0.68); // Adjust the rotation angle as per your needs
-    ctx.drawImage(arrowImage, -arrowImage.width / 2, -arrowImage.height / 2, arrowImage.width, arrowImage.height);
-    ctx.restore();
-  }
+
   ctx.restore();
 }    
 let shouldStopUltimate = false;
@@ -590,12 +686,12 @@ function updateCharacterPosition() {
   if (isSpaceBarPressed && character.canJump) {
     character.canJump = false;
     const jumpInterval = setInterval(() => {
-      character.y -= 12;
+      character.y -= 20;
     }, 50);
     setTimeout(() => {
       clearInterval(jumpInterval);
       const downJumpInterval = setInterval(() => {
-        character.y += 12;
+        character.y += 20;
       }, 50);
       setTimeout(() => {
         clearInterval(downJumpInterval);
@@ -613,12 +709,42 @@ function updateCharacterPosition() {
 
 }
 function updateArrowPosition() {
-  if (isArrowActive) {
-    arrow.x += arrow.velocity;
-  
-    if (arrow.x >= bossArray[0].x) {
+  if (isArrowActive && wasArrowAimingLeft) {
+    arrow.x -= arrow.velocity;
+    ctx.save();
+    ctx.translate(arrow.x, arrow.y);
+    ctx.scale(-1, 1);
+    ctx.rotate(0.68); 
+    ctx.drawImage(arrowImage, -arrowImage.width /2 +65, -arrowImage.height / 2 -65 , arrowImage.width, arrowImage.height);
+    ctx.restore();
+    if (arrow.x < 0) {
       isArrowActive = false;
-      bossArray[0].health -= 1;
+      wasArrowAimingLeft = false;
+    }
+    if (character.x > bossArray[0].x) {
+      if (arrow.x <= bossArray[0].x +50) {
+        bossArray[0].health -= 1;
+        isArrowActive = false;
+      }
+    }
+
+  }
+  else if (isArrowActive) {
+    arrow.x += arrow.velocity;
+    ctx.save();
+    ctx.translate(arrow.x, arrow.y);
+    ctx.rotate(0.68); 
+    ctx.drawImage(arrowImage, -arrowImage.width / 2, -arrowImage.height / 2, arrowImage.width, arrowImage.height);
+    ctx.restore();
+    if (arrow.x >= bossArray[0].x) {
+      if (character.x>bossArray[0].x){
+        if (arrow.x>canvas.width){
+          isArrowActive = false;
+        }
+      }
+      else if (character.x<bossArray[0].x){
+      isArrowActive = false;
+      bossArray[0].health -= 1;  }
     }
   }
 }
@@ -630,13 +756,15 @@ function gameLoop() {
   update();
   drawCharacter();
   updateArrowPosition();
+  updateFireBallPosition();
   ctx.fillStyle = "black";
   ctx.font = "24px Arial";
   ctx.fillText(`Health: ${character.health}`, 10, 30);
   ctx.fillText(`Ultimate: ${character.ultimateReady ? "Ready" : "Charging"}`, 10, 60);
-  ctx.fillText(`Boss Health: ${mageBoss.health}`, canvas.width - 200, 30); // Display boss health on the top right
-
+  ctx.fillText(`Boss Health: ${mageBoss.health}`, canvas.width - 200, 30); 
   updateCharacterPosition();
+
+  mageBoss.mageBossUltimate();
 
   requestAnimationFrame(gameLoop);
 }
@@ -690,6 +818,14 @@ character.jumpingInterval = setInterval(() => {
     }
   }
   }, 200)
+
+    mageBoss.spriteInterval = setInterval(() => {
+      mageBoss.currentUltimateSpellSpriteIndex++;
+      if (mageBoss.currentUltimateSpellSpriteIndex >= mageBoss.ultimateSpellSpriteArray.length) {
+        mageBoss.currentUltimateSpellSpriteIndex = 0;
+      }
+    }, 130);
+  
 window.addEventListener("resize", () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
