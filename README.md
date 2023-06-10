@@ -1,5 +1,5 @@
 # Invaders-Onslaught
-Homescreen, losing screen and win screen UI: https://www.freepik.com/author/upklyak
+Homescreen background: https://www.freepik.com/author/upklyak
 Arenas: https://craftpix.net/freebies/free-elven-land-game-battle-backgrounds/
 Playable character: https://rvros.itch.io/animated-pixel-hero
 Arrow: https://greenpixels.itch.io/pixel-art-asset-1

@@ -1,3 +1,51 @@
+/* let gameOn = false;
+button.addEventListener 
+gameOn = true;
+gameWin (add when level = 3.5)
+gameOver (add when character health is 0)
+if (gameOn){ }*/
+document.addEventListener("DOMContentLoaded", function() {
+  const startButton = document.getElementById("start-button");
+  const aboutButton = document.getElementById("about-button");
+  const galleryButton = document.getElementById("gallery-button");
+  const homeScreen = document.getElementById("home-screen");
+  const buttons = document.getElementById("buttons")
+  const returnButton1 = document.getElementById("return-button1")
+  const returnButton2 = document.getElementById("return-button2")
+  let gameOn = false;
+
+  startButton.addEventListener("click", startGame);
+  aboutButton.addEventListener("click", showAboutPage);
+  galleryButton.addEventListener("click", showGalleryPage);
+  returnButton1.addEventListener("click", showHomePage);
+  returnButton2.addEventListener("click", showHomePage);
+
+  function startGame() {
+    gameOn = true;
+    homeScreen.style.display = "none";
+    playGame()
+  }
+  function showAboutPage() {
+    buttons.style.display = "none";
+    returnButton1.style.display = "block"
+    homeScreen.style.backgroundImage = "url('images/GameOff/Game-about.png')";
+  }
+
+  function showGalleryPage() {
+    buttons.style.display = "none";
+    returnButton2.style.display = "block"
+    homeScreen.style.backgroundImage = "url('images/GameOff/bosses-info.png')";
+  }
+  function showHomePage() {
+    buttons.style.display = "flex";
+    homeScreen.style.backgroundImage = "url('images/GameOff/homescreen.png')";
+    returnButton1.style.display = "none"
+    returnButton2.style.display = "none"
+  }
+});
+
+
+function playGame(){
 const canvas = document.getElementById("game-canvas");
 const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
@@ -465,7 +513,7 @@ class Boss {
   }
   resetUltimateTiming() {
     clearTimeout(this.ultimateTimeout); 
-    this.ultimateReady = false; //
+    this.ultimateReady = false; 
     this.initializeUltimateTimeout(); 
   }
 }
@@ -1226,3 +1274,4 @@ window.addEventListener("resize", () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
   });
+}
