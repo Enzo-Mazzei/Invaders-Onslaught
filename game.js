@@ -4,6 +4,10 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 let level = 1
 let rangeAttacks = [];
+const vampireMeleeAttackImage = new Image();
+vampireMeleeAttackImage.src = "images/Bosses/vampire-melee-attack1.png";
+vampireMeleeAttackImage.width = 2000;
+vampireMeleeAttackImage.height = 2000;
 const character = {
   x: 100,
   y: canvas.height/2.3,
@@ -195,7 +199,21 @@ class Boss {
   secondBossUltimate() {
     if (this.isUltingPart2) {
       const ultimateSpellSprite = this.ultimateSpellSpriteArray[this.currentUltimateSpellSpriteIndex];
-      ctx.drawImage(ultimateSpellSprite, this.currentCharacterX-20, canvas.height/2.45 );
+      switch (this.name){
+        case "mageBoss":
+        ctx.drawImage(ultimateSpellSprite, this.currentCharacterX-20, canvas.height/2.45 );
+        break;
+        case "vampireBoss": 
+        ctx.drawImage(ultimateSpellSprite, this.currentCharacterX+83, canvas.height/2, ultimateSpellSprite.width * 3.5, ultimateSpellSprite.height * 3.5 );
+        break;
+        case "samuraiBoss": 
+        ctx.drawImage(ultimateSpellSprite, this.currentCharacterX+60, canvas.height/2.2, ultimateSpellSprite.width * 3, ultimateSpellSprite.height * 3 );
+        break;
+        case "robotBoss": 
+        ctx.drawImage(ultimateSpellSprite, this.currentCharacterX-30, canvas.height/2.6, ultimateSpellSprite.width/ 2.8, ultimateSpellSprite.height/ 2.8 );
+        break;
+
+      }
     }
   }
   updateBoss() {
@@ -217,17 +235,24 @@ class Boss {
   }
 
   bossMeleeAttack() {
+    let attackRange=200
     if (this.canAttack) {
       this.isAttacking = true;
       this.canAttack = false;
       switch (this.name){
       case "mageBoss":
-      this.width *= 1.55
+      this.width *= 1.3
+      break;
+      case "vampireBoss":
+        this.width *=1.15
+        attackRange = 160;
+        break;
       case "samuraiBoss":
       this.height*=0.75
-      this.width*=0.9 
+      break;
       case "robotBoss":
-        this.width*=0.85 }
+        this.width*=0.85
+        break; }
       const heighDiff = this.height -this.baseHeight;
       const widthDiff = this.width - this.baseWidth;
       this.x -= widthDiff;
@@ -237,10 +262,13 @@ class Boss {
         this.canAttack = true;
         this.width = this.baseWidth;
         this.height = this.baseHeight
+        if (this.name === "vampireBoss"){
+          ctx.clearRect(this.x, this.y, vampireMeleeAttackImage.width, vampireMeleeAttackImage.height);
+        }
         this.x = this.basex
         this.y = this.basey
         this.currentMeleeSpriteIndex = 0;
-        if (Math.abs(this.x - character.x) < 200){
+        if (Math.abs(this.x - character.x) < attackRange){
           character.health-= this.meleeDamages
         }
         clearInterval(this.spriteInterval); 
@@ -259,13 +287,25 @@ class Boss {
       this.isUlting = true;
       this.canAttack = false;
       this.currentCharacterX = character.x
+      let ultimateRange = 0;
+      let damagesTakenFromUlt = false;
       switch (this.name){
         case "mageBoss":
           this.width *= 3.1;
-          this.height *=1.5
+          this.height *=1.3;
+          ultimateRange = 120
+          break;
+        case "vampireBoss":
+          ultimateRange = 50
+          break;
         case "samuraiBoss":
           this.height *=0.75
-          this.width *=1.2
+          this.width *=1.3
+          ultimateRange = 60
+          break;
+        case "robotBoss":
+          ultimateRange = 100
+          break;
           }
       const heighDiff = this.height -this.baseHeight;
       const widthDiff = this.width - this.baseWidth;
@@ -281,18 +321,25 @@ class Boss {
         this.x = this.basex
         this.y = this.basey
         this.currentUltimateSpellSpriteIndex = 0;
-        if (Math.abs(this.x - character.x) < 260){
-          character.health-= this.ultimateDamages
+        switch (this.name){
+          case "mageBoss":
+          case "vampireBoss":
+          case "robotBoss":
+            if (Math.abs(this.x - character.x) < 130){
+              character.health-= this.ultimateDamages
+              damagesTakenFromUlt = true;
+            }
         }
         this.isUltingPart2= true;
         clearInterval(this.spriteInterval); 
-      }, this.ultimateSpriteArray.length*150);
+      }, this.ultimateAttackTime);
       setTimeout(() => {
         this.isUltingPart2 = false;
-        if (Math.abs(this.currentCharacterX - character.x) < 130){
+        if (!damagesTakenFromUlt){
+        if (Math.abs(this.currentCharacterX - character.x) < ultimateRange){
           character.health-= this.ultimateDamages
-        }
-      }, this.ultimateSpriteArray.length*150+this.ultimateSpellSpriteArray.length*130-150);
+        }}
+      }, this.ultimateAttackTime+this.ultimateSpellSpriteArray.length*130-150);
       this.spriteInterval = setInterval(() => {
         this.currentUltimateSpriteIndex++;
         if (this.currentUltimateSpriteIndex >= this.ultimateSpriteArray.length ) {
@@ -306,26 +353,33 @@ class Boss {
     if (this.canAttack) {
       this.isRangeAttacking = true;
       this.canAttack = false;
+      let rangeAttackTiming;
       switch (this.name){
         case "mageBoss":
           this.width *= 1.6;
+          rangeAttackTiming = 1400
+          break;
+          case "vampireBoss":
+          rangeAttackTiming = 900
           break;
         case "samuraiBoss":
           this.width *= 1.15;
-           this.height *=1.2
+          this.height *=1.2
+          rangeAttackTiming = 1100
            break;
-        case "robotBoos":
-          this.width *=0.6
-          const heighDiff = this.height -this.baseHeight;
-          const widthDiff = this.width - this.baseWidth;
-          this.x -= widthDiff;
-          this.y-= heighDiff
+        case "robotBoss":
+          this.width *=0.9
+          rangeAttackTiming = 430
           break;}
+        const heighDiff = this.height -this.baseHeight;
+        const widthDiff = this.width - this.baseWidth;
+        this.x -= widthDiff;
+        this.y-= heighDiff
       setTimeout(() => {
         switch (this.name){
           case "mageBoss":
             const fireBall = {
-              x: this.x + this.width - 25,
+              x: this.x + this.width - 15,
               y: this.y + this.height / 1.5 - 10,
               velocity: Math.random() * 11 + 5,
               active: true,
@@ -334,8 +388,8 @@ class Boss {
             break;
           case "vampireBoss":
             const blood = {
-              x: this.x + this.width - 25,
-              y: this.y + this.height / 1.5 - 10,
+              x: this.x + this.width -10,
+              y: this.y + this.height / 1.5 - 15,
               velocity: Math.random() * 11 + 5,
               active: true,
             };
@@ -343,8 +397,8 @@ class Boss {
             break;
           case "samuraiBoss":
             const samuraiArrow = {
-              x: this.x + this.width - 25,
-              y: this.y + this.height / 1.5 - 10,
+              x: this.x + this.width - 50,
+              y: this.y + this.height / 1.5 + 23,
               velocity: Math.random() * 11 + 5,
               active: true,
             };
@@ -352,8 +406,8 @@ class Boss {
             break;
           case "robotBoss":
             const lightning = {
-              x: this.x + this.width - 25,
-              y: this.y + this.height / 1.5 - 10,
+              x: this.x + this.width - 100,
+              y: this.y + this.height / 1.5,
               velocity: Math.random() * 11 + 5,
               active: true,
             };
@@ -361,7 +415,7 @@ class Boss {
             break;
         }
 
-      }, 1400);
+      }, rangeAttackTiming);
       setTimeout(() => {
         this.isRangeAttacking = false;
         this.canAttack = true;
@@ -385,8 +439,10 @@ class Boss {
     if (this.status){
     if (this.ultimateReady === true) {
       this.bossUltimateAttack();
-    } else if (Math.abs(this.x - character.x) < 300) {
+    } else if (Math.abs(this.x - character.x) < 225) {
       this.bossMeleeAttack();
+      if (this.name ==="vampireBoss"){
+        ctx.drawImage(vampireMeleeAttackImage, this.x-200,this.y);}
     } else {
       this.bossRangeAttack();
     }}
@@ -406,6 +462,11 @@ class Boss {
       this.status = false;
       level+=0.5
     }
+  }
+  resetUltimateTiming() {
+    clearTimeout(this.ultimateTimeout); 
+    this.ultimateReady = false; //
+    this.initializeUltimateTimeout(); 
   }
 }
 
@@ -484,7 +545,7 @@ const vampireBoss = new Boss(
   150,
   2,
   2,
-  900,
+  1350,
   2,
   900,
   4,
@@ -533,11 +594,11 @@ const samuraiBoss = new Boss(
   225,
   2,
   3,
-  750,
+  1125,
   2,
   1200,
   5,
-  1650,
+  1200,
   [
     "samurai-idle1.png",
     "samurai-idle2.png",
@@ -597,7 +658,7 @@ const robotBoss = new Boss(
   3,
   600,
   7,
-  900,
+  1200,
   [
     "robot-idle1.png",
     "robot-idle2.png",
@@ -695,7 +756,7 @@ function updateRangeAttackPosition() {
               samuraiArrowImage,
               samuraiArrowImage.width,
             -samuraiArrowImage.height / 2 - 40,
-            samuraiArrowImage.width*1.2,
+            samuraiArrowImage.width*1.8,
             samuraiArrowImage.height/2.3
             ); break;
         case robotBoss:
@@ -809,7 +870,7 @@ document.addEventListener("keydown", (event) => {
             if ((isLeftKeyPressed && currentBoss.x - character.x <= 0 && currentBoss.x - character.x >= -150)|| (currentBoss.x - character.x >= 0 && currentBoss.x - character.x <= 150)){
               currentBoss.health -=2
             }
-          }, 600);
+          }, 500);
           setTimeout(() => {
             isAttacking = false;
             character.canAttack= true
@@ -830,7 +891,7 @@ document.addEventListener("keydown", (event) => {
           }, 1800);
           setTimeout(() => {
             character.ultimateReady= true
-          }, 15000);}
+          },15000);}
       break;
       case "W":
         case "w":
@@ -934,7 +995,6 @@ let shouldStopUltimate = false;
 let yIncrement = 0;
 let yDecrement = 0;
 let characterSpeed = 5;
-let characterCrouchingSpeed = 1.5;
 function updateCharacterPosition() {
   if (!isCrouching && character.canJump) {
     character.height = 148;
@@ -942,20 +1002,20 @@ function updateCharacterPosition() {
   }
  
   if (!Number.isInteger(level) && isRightKeyPressed && isCrouching){
-    character.x += characterCrouchingSpeed;
+    character.x += characterSpeed/3;
   }
   else if (!Number.isInteger(level) && isRightKeyPressed){
     character.x += characterSpeed;
   }
   else if (isRightKeyPressed && isCrouching && character.x < canvas.width - character.width) {
-    character.x += characterCrouchingSpeed;
+    character.x += characterSpeed/3;
   }
   else if (isRightKeyPressed && character.x < canvas.width - character.width){
     character.x += characterSpeed;
   }
 
   if (isLeftKeyPressed && isCrouching && character.x > 0) {
-    character.x -= characterCrouchingSpeed;
+    character.x -= characterSpeed/3;
   }
   else if (isLeftKeyPressed && character.x > 0){
     character.x -= characterSpeed;
@@ -970,7 +1030,7 @@ function updateCharacterPosition() {
         yIncrement -=3
       }, 1000);
       if (character.x < canvas.width - character.width){
-      character.x += characterCrouchingSpeed;}
+      character.x += characterSpeed/3;}
     }
   
   if (isSpaceBarPressed && character.canJump) {
@@ -1050,7 +1110,8 @@ function gameLoop() {
   ctx.font = "24px Arial";
   ctx.fillText(`Health: ${character.health}`, 10, 30);
   ctx.fillText(`Ultimate: ${character.ultimateReady ? "Ready" : "Charging"}`, 10, 60);
-  ctx.fillText(`Boss Health: ${currentBoss.health}`, canvas.width - 200, 30); 
+  if (currentBoss.health>0){
+  ctx.fillText(`Boss Health: ${currentBoss.health}`, canvas.width - 200, 30);}
   updateCharacterPosition();
 if (currentBoss.status){
   updateRangeAttackPosition();
@@ -1075,8 +1136,14 @@ if (character.x>=canvas.width){
       break;
   }
   character.x = 20
-  currentBoss.initializeUltimateTimeout();
+  characterSpeed *=1.2
+  if (character.health<=8){
+  character.health+=2}
+  else if (character.health===9){
+  character.health=10
+  }
   level+=0.5
+  currentBoss.resetUltimateTiming()
 }
   requestAnimationFrame(gameLoop);
 }
@@ -1158,5 +1225,4 @@ character.jumpingInterval = setInterval(() => {
 window.addEventListener("resize", () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-  // Add later the logic to change other things sizes
   });
