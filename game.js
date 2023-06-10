@@ -1,10 +1,4 @@
-/* let gameOn = false;
-button.addEventListener 
-gameOn = true;
-gameWin (add when level = 3.5)
-gameOver (add when character health is 0)
-if (gameOn){ }*/
-document.addEventListener("DOMContentLoaded", function() {
+  document.addEventListener("DOMContentLoaded", function() {
   const startButton = document.getElementById("start-button");
   const aboutButton = document.getElementById("about-button");
   const galleryButton = document.getElementById("gallery-button");
@@ -12,7 +6,6 @@ document.addEventListener("DOMContentLoaded", function() {
   const buttons = document.getElementById("buttons")
   const returnButton1 = document.getElementById("return-button1")
   const returnButton2 = document.getElementById("return-button2")
-  let gameOn = false;
 
   startButton.addEventListener("click", startGame);
   aboutButton.addEventListener("click", showAboutPage);
@@ -21,10 +14,10 @@ document.addEventListener("DOMContentLoaded", function() {
   returnButton2.addEventListener("click", showHomePage);
 
   function startGame() {
-    gameOn = true;
     homeScreen.style.display = "none";
     playGame()
   }
+
   function showAboutPage() {
     buttons.style.display = "none";
     returnButton1.style.display = "block"
@@ -43,7 +36,6 @@ document.addEventListener("DOMContentLoaded", function() {
     returnButton2.style.display = "none"
   }
 });
-
 
 function playGame(){
 const canvas = document.getElementById("game-canvas");
@@ -522,7 +514,6 @@ function update() {
   if (currentBoss.status){
   currentBoss.updateBoss();
   currentBoss.drawBoss(ctx);}
-  requestAnimationFrame(update);
 }
 
 const mageBoss = new Boss(
@@ -1146,7 +1137,9 @@ function updateArrowPosition() {
     }
   }
 }
+
 function gameLoop() {
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
