@@ -1,5 +1,5 @@
 # Invaders-Onslaught
-Homescreen background: https://www.freepik.com/author/upklyak
+Entire GUI: Skolaztika's fantasy pack.
 Arenas: https://craftpix.net/freebies/free-elven-land-game-battle-backgrounds/
 Playable character: https://rvros.itch.io/animated-pixel-hero
 Arrow: https://greenpixels.itch.io/pixel-art-asset-1

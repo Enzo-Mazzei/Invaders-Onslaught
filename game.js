@@ -1,47 +1,69 @@
-  document.addEventListener("DOMContentLoaded", function() {
-  const startButton = document.getElementById("start-button");
-  const aboutButton = document.getElementById("about-button");
-  const galleryButton = document.getElementById("gallery-button");
-  const homeScreen = document.getElementById("home-screen");
-  const buttons = document.getElementById("buttons")
-  const returnButton1 = document.getElementById("return-button1")
-  const returnButton2 = document.getElementById("return-button2")
+const startButton = document.getElementById("start-button");
+const aboutButton = document.getElementById("about-button");
+const galleryButton = document.getElementById("gallery-button");
+const homeScreen = document.getElementById("home-screen");
+const buttons = document.getElementById("buttons");
+const returnButton1 = document.getElementById("return-button1");
+const returnButton2 = document.getElementById("return-button2");
+const returnButton3 = document.getElementById("return-button3");
+const winLoseScreen = document.getElementById("win-lose-screens");
 
-  startButton.addEventListener("click", startGame);
-  aboutButton.addEventListener("click", showAboutPage);
-  galleryButton.addEventListener("click", showGalleryPage);
-  returnButton1.addEventListener("click", showHomePage);
-  returnButton2.addEventListener("click", showHomePage);
+startButton.addEventListener("click", startGame);
+aboutButton.addEventListener("click", showAboutPage);
+galleryButton.addEventListener("click", showGalleryPage);
+returnButton1.addEventListener("click", showHomePage);
+returnButton2.addEventListener("click", showHomePage);
+returnButton3.addEventListener("click", showHomePage);
 
-  function startGame() {
-    homeScreen.style.display = "none";
-    playGame()
-  }
+let gameStarted = false;
 
-  function showAboutPage() {
-    buttons.style.display = "none";
-    returnButton1.style.display = "block"
-    homeScreen.style.backgroundImage = "url('images/GameOff/Game-about.png')";
-  }
+function startGame() {
+  homeScreen.style.display = "none";
+  playGame();
+  gameStarted = true;
+}
 
-  function showGalleryPage() {
-    buttons.style.display = "none";
-    returnButton2.style.display = "block"
-    homeScreen.style.backgroundImage = "url('images/GameOff/bosses-info.png')";
-  }
-  function showHomePage() {
-    buttons.style.display = "flex";
-    homeScreen.style.backgroundImage = "url('images/GameOff/homescreen.png')";
-    returnButton1.style.display = "none"
-    returnButton2.style.display = "none"
-  }
-});
+function showAboutPage() {
+  buttons.style.display = "none";
+  returnButton1.style.display = "block";
+  homeScreen.style.backgroundImage = "url('images/GameOff/Game-about.png')";
+}
+
+function showGalleryPage() {
+  buttons.style.display = "none";
+  returnButton2.style.display = "block";
+  homeScreen.style.backgroundImage = "url('images/GameOff/bosses-info.png')";
+}
+
+function showWinScreen() {
+  returnButton3.style.display = "block";
+  winLoseScreen.style.display = "flex";
+  winLoseScreen.style.backgroundImage = "url('images/GameOff/win_screen.png')";
+}
+
+function showLoseScreen() {
+  returnButton3.style.display = "block";
+  winLoseScreen.style.display = "flex";
+  winLoseScreen.style.backgroundImage = "url('images/GameOff/game-over-screen.png')";
+}
+function showHomePage() {
+  homeScreen.style.backgroundImage = "url('images/GameOff/homescreen.png')";
+  homeScreen.style.display = "flex"
+  buttons.style.display = "flex";
+  winLoseScreen.style.display = "none";
+  returnButton1.style.display = "none";
+  returnButton2.style.display = "none";
+  returnButton3.style.display = "none";
+  gameStarted = false;
+}
 
 function playGame(){
-const canvas = document.getElementById("game-canvas");
+const canvas = document.createElement("canvas");
+const gameContainer = document.getElementById("game-container");
 const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
+gameContainer.appendChild(canvas);
 let level = 1
 let rangeAttacks = [];
 const vampireMeleeAttackImage = new Image();
@@ -1139,6 +1161,16 @@ function updateArrowPosition() {
 }
 
 function gameLoop() {
+  if (level === 4.5){
+    canvas.remove();
+    showWinScreen()
+    return;
+  }
+  else if (character.health <=5){
+    canvas.remove();
+    showLoseScreen()
+    return;
+  }
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
