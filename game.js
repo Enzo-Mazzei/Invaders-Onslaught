@@ -8,6 +8,29 @@ const returnButton2 = document.getElementById("return-button2");
 const returnButton3 = document.getElementById("return-button3");
 const winLoseScreen = document.getElementById("win-lose-screens");
 
+const homeMusic = document.getElementById("home-music");
+const mageMusic = document.getElementById("mage-boss-music");
+const vampireMusic = document.getElementById("vampire-boss-music");
+const samuraiMusic = document.getElementById("samurai-boss-music");
+const robotMusic = document.getElementById("robot-boss-music");
+const winMusic = document.getElementById("win-music");
+const loseMusic = document.getElementById("lose-music");
+const volumeLevel = 0.05;
+
+homeMusic.volume = volumeLevel;
+mageMusic.volume = volumeLevel;
+vampireMusic.volume = volumeLevel;
+samuraiMusic.volume = volumeLevel;
+robotMusic.volume = volumeLevel;
+winMusic.volume = volumeLevel;
+loseMusic.volume = volumeLevel;
+
+
+window.addEventListener("load", function() {
+  homeMusic.play();
+});
+
+
 startButton.addEventListener("click", startGame);
 aboutButton.addEventListener("click", showAboutPage);
 galleryButton.addEventListener("click", showGalleryPage);
@@ -19,6 +42,8 @@ let gameStarted = false;
 
 function startGame() {
   homeScreen.style.display = "none";
+  homeMusic.pause()
+  homeMusic.currentTime = 0;
   playGame();
   gameStarted = true;
 }
@@ -55,6 +80,12 @@ function showHomePage() {
   returnButton2.style.display = "none";
   returnButton3.style.display = "none";
   gameStarted = false;
+  winMusic.pause()
+  winMusic.currentTime = 0
+  loseMusic.pause()
+  loseMusic.currentTime = 0
+  if (homeMusic.currentTime === 0){
+  homeMusic.play()}
 }
 
 function playGame(){
@@ -882,6 +913,7 @@ backgroundImage.onload = () => {
   currentBoss.startBossAttacks();
   if (!isGameLooping) {
     gameLoop();
+    mageMusic.play()
     isGameLooping = true
   }
 };
@@ -905,7 +937,7 @@ document.addEventListener("keydown", (event) => {
       isLeftKeyPressed = true;
       isRunning = true;
       break;
-      case " ":
+      case "ArrowUp":
       if (character.canJump && character.canAttack) {
         isSpaceBarPressed = true;
         isJumping = true;
@@ -996,7 +1028,7 @@ document.addEventListener("keyup", (event) => {
       isLeftKeyPressed = false;
       isRunning = false;
       break;
-      case " ":
+      case "ArrowUp":
       isSpaceBarPressed = false;
       break;
     case "ArrowDown":
@@ -1163,12 +1195,18 @@ function updateArrowPosition() {
 function gameLoop() {
   if (level === 4.5){
     canvas.remove();
+    robotMusic.pause()
+    robotMusic.currentTime = 0
     showWinScreen()
+    winMusic.play()
     return;
   }
-  else if (character.health <=5){
+  else if (character.health <=0){
     canvas.remove();
+    robotMusic.pause()
+    robotMusic.currentTime = 0
     showLoseScreen()
+    loseMusic.play()
     return;
   }
 
@@ -1196,14 +1234,23 @@ if (character.x>=canvas.width){
     case 1.5:
       backgroundImage.src = "images/castleland.png";
       currentBoss = vampireBoss
+      mageMusic.pause();
+      mageMusic.currentTime = 0;
+      vampireMusic.play();
       break;
     case 2.5:
       backgroundImage.src = "images/terraceland.png";
       currentBoss = samuraiBoss
+      vampireMusic.pause();
+      vampireMusic.currentTime = 0;
+      samuraiMusic.play();
       break;
     case 3.5:
       backgroundImage.src = "images/skyland.png";
       currentBoss = robotBoss
+      samuraiMusic.pause();
+      samuraiMusic.currentTime = 0;
+      robotMusic.play();
       break;
     default:
       break;

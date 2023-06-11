@@ -77,7 +77,7 @@ body {
   display: none;
   cursor: pointer;
   margin-left: 50vw;
-  margin-top: 60vh;
+  margin-top: 61vh;
 }
 
 #return-button2 {
@@ -114,4 +114,16 @@ body {
   background-position: center center;
   background-attachment: fixed;
   background-size: cover;
+}
+#credits-message {
+  font-family: "Old English Text MT", "Bookman Old Style", Bookman, "URW Bookman L", serif;
+  font-size: 22px;
+  color: black;
+  width: 15vw;
+  text-align: center;
+}
+
+#credits-message a {
+
+  color: inherit;
 }
