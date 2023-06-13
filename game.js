@@ -573,7 +573,7 @@ const mageBoss = new Boss(
   "mageBoss",
   80,
   150,
-  2,
+  10,
   1,
   900,
   2,
@@ -635,7 +635,7 @@ const vampireBoss = new Boss(
   "vampireBoss",
   100,
   150,
-  2,
+  20,
   2,
   1350,
   2,
@@ -684,7 +684,7 @@ const samuraiBoss = new Boss(
   "samuraiBoss",
   125,
   225,
-  2,
+  30,
   3,
   1125,
   2,
@@ -744,7 +744,7 @@ const robotBoss = new Boss(
   "robotBoss",
   200,
   170,
-  2,
+  50,
   3,
   900,
   3,
@@ -1203,6 +1203,9 @@ function gameLoop() {
   }
   else if (character.health <=0){
     canvas.remove();
+    mageMusic.pause()
+    vampireMusic.pause()
+    samuraiMusic.pause()
     robotMusic.pause()
     robotMusic.currentTime = 0
     showLoseScreen()
